@@ -40,7 +40,9 @@ def cargar_fecha():
     mes = validar_entre(1, 12)
     print("Ingrese dia (DD)...")
     fin_mes = obtener_dias_por_mes_y_anio(mes, anio)
+    mes = dos_digitos(mes)
     dia = validar_entre(1, fin_mes)
+    dia = dos_digitos(dia)
 
     return f"{dia:<2}/{mes:<2}/{anio:<4}"
 
@@ -50,21 +52,38 @@ def generar_titulo():
     return f"{random.choice(letras)}{random.choice(letras)}{random.choice(letras)}{random.randint(100, 999)}"
 
 
+def numero_unico(v_proy, num):
+    # Validar qe el numero no este repetido en el arreglo
+    n = len(v_proy)
+    for i in range(n):
+        if v_proy[i].numero == num:
+            return False
+    return True
+
+
 def carga_manual(v_proy, cant):
     for i in range(cant):
-        numero = int(input("Ingrese numero para el proyecto: "))
-        titulo = input("Ingrese titulo del proyecto: ")
+        print(f"\nIngrese numero para el proyecto {i+1}...")
+        numero = validar()
+        while not numero_unico(v_proy, numero):
+            print("Numero de proyecto repetido...")
+            numero = validar()
+
+        titulo = input(f"Ingrese titulo del proyecto {numero}: ")
         fecha = cargar_fecha()
         leng = seleccionar_lenguaje()
-        cant_lineas = int(input("Ingrese cantidad de lineas del codigo: "))
+        print("Ingrese cantidad de lineas del codigo...")
+        cant_lineas = validar()
         v_proy.append(Modulo.Proyecto(numero, titulo, fecha, leng, cant_lineas))
 
 
 def carga_auto(v_proy, cant):
     for i in range(cant):
         numero = random.randint(1000, 9999)
+        while not numero_unico(v_proy, numero):
+            numero = random.randint(1000, 9999)
         titulo = generar_titulo()
-        fecha = f"{random.randint(10, 30)}/{random.randint(1, 12)}/{random.randint(2000, 2022)}"
+        fecha = f"{dos_digitos(random.randint(1, 30))}/{dos_digitos(random.randint(1, 12))}/{random.randint(2000, 2022)}"
         leng = random.randint(0, 10)
         cant_lineas = random.randint(100, 999)
         v_proy.append(Modulo.Proyecto(numero, titulo, fecha, leng, cant_lineas))
@@ -118,30 +137,38 @@ def buscar_numero(v_proy):
 
 
 def resumen(v_proy):
-    v_leng = [0] * (len(Modulo.obtener_lenguajes())) # Crear vector de ceros
+    v_leng = [0] * (len(Modulo.obtener_lenguajes()))  # Crear vector de ceros
     n = len(v_proy)
     for i in range(n):
         v_leng[v_proy[i].lenguaje] += v_proy[i].cant_lineas
 
+    print("{:<20}N° DE LINEAS".format("LENGUAJE"))
     for i in range(len(v_leng)):
-        print(f"Lenguaje: {Modulo.lenguaje(i):<20} - Cant. de lineas: {v_leng[i]}")
+        print(f"-{Modulo.lenguaje(i):<20} -{v_leng[i]}")
 
 
-def resumen_anio(v_proyectos):
-    anios = [0]*23
-    for i in range(len(v_proyectos)):
-        fecha = v_proyectos[i].fecha
+def contar_por_anio(v_proy):
+    anios = [0] * 23
+    for i in range(len(v_proy)):
+        fecha = v_proy[i].fecha
         if fecha[-2] == 0:
             ids = int(fecha[-1])
         else:
             ids = int(fecha[-2] + fecha[-1])
         anios[ids] += 1
+    
+    return anios
 
+
+def resumen_anio(v_proyectos):
+    anios = contar_por_anio(v_proyectos)
+
+    print("{:<8}{:<5}".format("AÑO", "CANT PROYECTOS"))
     for i in range(len(anios)):
         if anios[i] > 0:
             anio = 2000 + i
-            print('En el año', anio, 'se generaron', anios[i], 'proyectos')
-
+            print(f"-{anio:<8}{anios[i]}")
+            # print('En el año', anio, 'se generaron', anios[i], 'proyectos')
 
 
 def listar_leng(v_proy):
@@ -158,8 +185,19 @@ def listar_leng(v_proy):
             print(Modulo.to_string(v_proy[i]))
 
 
-def opcion7():
-    pass
+def opcion7(v_proy):
+    anios = contar_por_anio(v_proy)
+
+    may = None
+    for i in range(len(anios)):
+        if may is None or anios[i] > may:
+            may = anios[i]
+    
+    print('\nAños con mayor cantidad de proyectos actualizados: ')
+    for i in range(len(anios)):
+        if anios[i] == may:
+            anio = 2000 + i
+            print('\t- Año', anio, 'con', may, 'proyectos')
 
 
 # Mostrar menu y solicitar opcion
@@ -182,7 +220,8 @@ def mostrar_menu():
 
     return op
 
-def menu():
+
+def principal():
     # Iniciar el vector que contiene los proyectos
     v_proyectos = []
     op = 0
@@ -200,6 +239,9 @@ def menu():
                 carga_auto(v_proyectos, cant)
             print("---Carga completa---")
 
+        if op == 8:
+            print("--- Programa finalizado ---")
+
         else:
             if len(v_proyectos) == 0:
                 print("Aun no se han cargado proyectos...")
@@ -216,13 +258,10 @@ def menu():
                 elif op == 6:
                     listar_leng(v_proyectos)
                 elif op == 7:
-                    opcion7()
+                    opcion7(v_proyectos)
             
-        input("Pulse enter para continuar...")
-
-        if op == 8:
-            print("--- Programa finalizado ---")
+        input("\n>>Pulse enter para continuar...")
 
 
 if __name__ == '__main__':
-    menu()
+    principal()
